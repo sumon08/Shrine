@@ -38,12 +38,17 @@ SOFTWARE.
 
 
 #include <stddef.h>
+#include <stdlib.h>
 
 
 namespace Event
 {
 	#ifndef NULL
 		#define NULL (void *)0
+	#endif
+	
+	#ifndef assert
+		#define assert(x)
 	#endif
 	
 
@@ -104,8 +109,9 @@ namespace Event
 		private:
 		pointer			_p;
 	};
-
-	
 }
+
+
+
 
 #endif  //_MEMORY_INCLUDE_H

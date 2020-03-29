@@ -145,7 +145,7 @@ namespace Event {
 
 
 
-		bool Push(unique_ptr<T> & element)
+		bool Push(unique_ptr<T> element)
 		{
 			if(tail == max_size){
 				tail=0;
