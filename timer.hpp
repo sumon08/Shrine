@@ -36,6 +36,52 @@ SOFTWARE.
 #define TIMER_H_
 
 
+#include "ticktype.hpp"
+
+
+
+namespace Event 
+{
+	typedef void (*TimerCallback)();
+	
+	enum class TimerType
+	{
+		ONE_SHOT,
+		REPETATIVE
+	};
+	
+	class ITimer 
+	{
+		public:
+		ITimer() = default;
+		~ITimer() = default;
+		
+		virtual TimerType & Type() = 0;
+		virtual void Callback(TimerCallback callback) = 0;		
+		virtual bool Start() = 0;
+		virtual bool Stop() = 0;
+		virtual bool Reset() = 0;
+		virtual ITimer * Clone() = 0;
+		virtual void Release() = 0;
+				
+	};
+	
+	
+	class TimerManager
+	{
+		protected:
+		TimerManager();
+		
+		
+		public:
+		
+		
+		virtual ~TimerManager() = default;
+		static TimerManager * Instance();
+		bool Initialise();
+		virtual ITimer * Create();
+	};
+}
 
 
 

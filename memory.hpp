@@ -39,6 +39,7 @@ SOFTWARE.
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 
 namespace Event
@@ -95,7 +96,7 @@ namespace Event
 		inline constexpr pointer	get (void) const		{ return _p; }
 		inline pointer		release (void)			{ auto rv (_p); _p = nullptr; return rv; }
 		inline void			reset (pointer p = nullptr)	{ assert (p != _p || !p); auto ov (_p); _p = p; delete ov; }
-		inline void			swap (unique_ptr& v)		{ swap (_p, v._p); }
+		//inline void			swap (unique_ptr& v)		{ swap (_p, v._p); }
 		inline constexpr explicit	operator bool (void) const	{ return _p != nullptr; }
 		inline unique_ptr&		operator= (pointer p)		{ reset (p); return *this; }
 		inline unique_ptr&		operator= (unique_ptr&& p)	{ reset (p.release()); return *this; }

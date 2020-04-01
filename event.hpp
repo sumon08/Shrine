@@ -34,15 +34,99 @@ SOFTWARE.
 #ifndef EVENT_H_
 #define EVENT_H_
 
+#include "config.hpp"
+#include "fifo.hpp"
+#include <stdint.h>
+
+
 namespace Event 
 {
+	
+	
+	typedef void (*Callback)();
+	
 	class Event 
 	{
-			
+		public:
+		Event();
+		#ifdef CONFIG_DEBUG_EVENT
+		Event(uint16_t event_id, char * event_name);
+		#endif // CONFIG_DEBUG_EVENT
+		virtual ~Event();
 		
+		uint8_t & Priority();
+		virtual void EventHandler();
+		
+		
+		#ifdef CONFIG_DEBUG_EVENT
+		uint16_t & Id();
+		char * Name();
+		#endif // CONFIG_DEBUG_EVENT
+		
+		private:
+			#ifdef CONFIG_DEBUG_EVENT
+			uint16_t id;
+			char name[10];
+			#endif // CONFIG_DEBUG_EVENT	
+			
+			uint8_t priority;
+	
+	};
+	
+	struct InterruptHandler
+	{
+		
+		InterruptHandler();
+		InterruptHandler(Callback func_ptr);
+		~InterruptHandler() = default;
+		uint16_t data;
+		Callback callback;
+		
+		void operator()()
+		{
+			callback();
+		}
+	};
+	
+	struct TimerHandler
+	{
+		TimerHandler();
+		TimerHandler(Callback func_ptr);
+		~TimerHandler() = default;
+		
+		// member variable
+		Callback callback;
+		
+		void operator () ()
+		{
+			callback();
+		}
 	};
 	
 	
+	class EventManager
+	{		
+		EventManager();			
+		public: 
+		
+		~EventManager() = default;
+		
+		bool Trigger(unique_ptr<Event> event);
+		bool Trigger(InterruptHandler handler);
+		bool Triggar(TimerHandler handler);
+		bool Run();
+		
+		static EventManager & Instance();
+		
+		private:
+		Fifo<unique_ptr<Event>> event_buffer[CONFIG_EVENT_MAX_PRIORITY];
+		Fifo<TimerHandler> timer_handler_buffer;
+		Fifo<InterruptHandler> interrupt_bufer;
+		
+		static EventManager manager_instance;
+		
+		
+	};
 	 
 	
 }

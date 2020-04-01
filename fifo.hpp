@@ -36,6 +36,7 @@ SOFTWARE.
 #define _FIFO_INCLUDE_H
 
 #include "memory.hpp"
+#include "config.hpp"
 
 
 namespace Event {
@@ -59,9 +60,9 @@ namespace Event {
 
 
 
-		Fifo<T>(int size): max_size(size)
+		Fifo<T>(): max_size(CONFIG_FIFO_SIZE)
 		{
-			queue = new T[size];
+			queue = new T[CONFIG_FIFO_SIZE];
 			queue_size = 0;
 			head = 0;
 			tail=0;
@@ -129,9 +130,9 @@ namespace Event {
 
 
 
-		Fifo<unique_ptr<T>>(int size): max_size(size)
+		Fifo<unique_ptr<T>>(): max_size(CONFIG_FIFO_SIZE)
 		{
-			queue = new unique_ptr<T>[size];
+			queue = new unique_ptr<T>[CONFIG_FIFO_SIZE];
 			queue_size = 0;
 			head = 0;
 			tail=0;
