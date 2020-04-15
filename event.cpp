@@ -99,7 +99,7 @@ namespace Event
 	
 	
 	
-	bool EventManager::Trigger(unique_ptr<Event> event)
+	bool EventManager::Trigger(UniquePtr<Event> event)
 	{
 		if (!event || event->Priority() >= CONFIG_EVENT_MAX_PRIORITY)
 		{
@@ -138,7 +138,7 @@ namespace Event
 				{
 					if (event_buffer[i].Length() > 0)
 					{
-						unique_ptr<Event> event = event_buffer[i].Pop();
+						UniquePtr<Event> event = event_buffer[i].Pop();
 						event->EventHandler();
 						break;
 					}

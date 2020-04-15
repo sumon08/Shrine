@@ -11,92 +11,62 @@
 
 
 #include "event.hpp"
+#include "memory.hpp"
 
 namespace Event
 {
+	
+	
+	#define TIMER_COUNTER_MAX		0xFFFF
+	#define TIMER_COUNTER_MID		0x8000
+	
+	
+	
+	void TimerTickHandler();
 	void DefaultTimerHandler()
 	{
 		
 	}
 	
 	
+	struct TimerNode
+	{
+		uint16_t counter;
+		TimerCallback func_ptr;
+		TimerType type;
+		TickType timer_tick;
+		TimerStatus status;
+		SharedPtr<TimerNode> pNext; // need to be a weal_ptr here. Must need to careful with self reference.
+	};
 	
-	class TimerBase : public ITimer
+	
+	class Timer : public ITimer
 	{
 		
 		
-		struct TimerNode
-		{
-			uint16_t upper_count;
-			uint16_t lower_count;
-			TimerBase * pNext;
-		};
 		
 		public:
 		
-		TimerBase()
+		Timer()
 		{
-			node.pNext = NULL;
-			func_ptr = DefaultTimerHandler;
+			node->pNext = NULL;
+			node->func_ptr = DefaultTimerHandler;
 		}
 		
 		
 		
 		
-		ITimer * Clone();
 		TimerType & Type();
 		void Callback(TimerCallback callback);
 		bool Start();
 		bool Stop();
 		bool Reset();
-		void Release();
+		TimerStatus & Status();
 		
 		public:
-		uint8_t count;
-		TimerCallback func_ptr;
-		TimerType type;
-		TickType timer_tick;
-		TimerNode node;
+		SharedPtr<TimerNode> node;
 		
 	};
-	
-	
-	TimerType & TimerBase::Type()
-	{
-		return type;
-	}
-	void TimerBase::Callback( TimerCallback callback)
-	{
-		func_ptr = callback;
-	}
-	bool TimerBase::Start()
-	{
-		return true;
-	}
-	bool TimerBase::Stop()
-	{
-		return true;
-		
-	}
-	bool TimerBase::Reset()
-	{
-		return true;
-	}
-	
-	ITimer *  TimerBase::Clone()
-	{
-		count++;
-		return  (ITimer *)this;
-	}
-	
-	
-	void TimerBase::Release()
-	{
-		count--;
-	}
-	
-	
-	void TimerTickHandler();
 	
 	
 	
@@ -116,23 +86,143 @@ namespace Event
 		
 		public:
 		Hardware::TickTimer * tick_timer;
-		uint16_t upper_counter;
-		uint16_t lower_counter;
+		uint16_t counter;
 		
-		TimerBase * pActive;
-		TimerBase * pExpired;
+		SharedPtr<TimerNode> pActive;
+		SharedPtr<TimerNode> pExpired;
+		SharedPtr<TimerNode> pStopped;
 		
 	};
+	
+	static TimerManagerPrivate manager;
+	
+	TimerStatus & Timer::Status()
+	{
+		return node->status;
+	}
+	
+	
+	TimerType & Timer::Type()
+	{
+		return node->type;
+	}
+	void Timer::Callback( TimerCallback callback)
+	{
+		node->func_ptr = callback;
+	}
+	bool Timer::Start()
+	{
+		bool ret = false;
+		if(node->status != TimerStatus::STOPPED)
+			return false;
+			
+		if (!manager.pActive)
+		{
+			manager.counter = 0;
+			manager.pActive = node;
+			node->status = TimerStatus::RUNNING;
+			return true;
+		}
+		
+		if(manager.counter == 0)
+		{
+			SharedPtr<TimerNode> pnode = manager.pActive;
+			SharedPtr<TimerNode> prev_node;
+			while(1)
+			{
+				if (node->counter < pnode->counter)
+				{
+					node->pNext = pnode;
+					if(!prev_node)
+					{
+						manager.pActive = node;
+					}
+					else
+					{
+						prev_node->pNext = node;
+					}
+					return true;
+				}
+				else
+				{
+					prev_node = pnode;
+					pnode= pnode->pNext;
+				}
+			}
+		}
+		
+		SharedPtr<TimerNode> segment = manager.pActive;
+		while(1)
+		{
+			if(segment->counter < manager.counter)
+				break;
+			else
+				segment = segment->pNext;
+		}
+
+		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
+		if(diff > node->timer_tick.Tick())
+		{
+			node->counter = manager.counter + node->timer_tick.Tick();
+			SharedPtr<TimerNode> pnode = manager.pActive;
+			SharedPtr<TimerNode> prev;
+			while(pnode)
+			{
+				if(node->counter < node->counter)
+				{
+					node->pNext = manager.pActive;
+					manager.pActive = node;
+				}
+				else
+				{
+					if(pnode->counter < manager.counter)
+					{
+						if(prev)
+						{
+							node->pNext = pnode;
+							prev->pNext = node;
+							break;
+						}
+					}
+				}
+				prev = pnode;
+				pnode = node->pNext;
+			}
+		}
+		else
+		{
+			node->counter = node->timer_tick.Tick() - diff;
+		}
+		return ret;
+	}
+	bool Timer::Stop()
+	{
+		return true;
+		
+	}
+	bool Timer::Reset()
+	{
+		return true;
+	}
+	
+	
+	
+	
+
+	
+	
+	
+	
 	
 	
 	ITimer * TimerManagerPrivate::Create()
 	{
-		TimerBase * tb = new TimerBase();
+		Timer * tb = new Timer();
 		return (ITimer *)tb;
 	}
 	
 	
-	static TimerManagerPrivate manager;
+	
 	
 	TimerManager * TimerManager::Instance()
 	{
@@ -152,15 +242,15 @@ namespace Event
 	
 	void TimerHandlerpvt()
 	{
-		if (manager.pExpired != NULL)
+		if (manager.pExpired)
 		{
-			TimerBase * tb = manager.pExpired;
-			while(tb != NULL)
+			SharedPtr<TimerNode> tb = manager.pExpired;
+			while(tb)
 			{
 				tb->func_ptr();
 				if(tb->type == TimerType::REPETATIVE)
 				{
-					tb->Start();
+					//tb->Start();
 				}
 			}
 		}
@@ -168,24 +258,23 @@ namespace Event
 	
 	void TimerTickHandler()
 	{
-		manager.lower_counter++;
-		if (manager.lower_counter == 0xFFFF)
+		manager.counter++;
+		if (manager.counter == 0xFFFF)
 		{
-			manager.lower_counter = 0;
-			manager.upper_counter++;
+			manager.counter = 0;
 		}
 		
-		if (manager.pActive !=NULL)
+		if (manager.pActive)
 		{
-			TimerBase * tb = manager.pActive;
-			while(tb != NULL)
+			SharedPtr<TimerNode> tb = manager.pActive;
+			while(tb)
 			{
-				if (tb->node.upper_count == manager.upper_counter && tb->node.lower_count == manager.lower_counter)
+				if (tb->counter == manager.counter)
 				{
-					TimerBase * ttb = tb;
-					ttb->node.pNext = manager.pExpired;
+					SharedPtr<TimerNode> ttb = tb;
+					ttb->pNext = manager.pExpired;
 					manager.pExpired = ttb;
-					tb = tb->node.pNext;
+					tb = tb->pNext;
 				}
 				else
 				{
@@ -193,7 +282,7 @@ namespace Event
 				}
 			}
 			
-			if (manager.pExpired != NULL)
+			if (manager.pExpired)
 			{
 				TimerHandler handler;
 				handler.callback = TimerHandlerpvt;

@@ -50,19 +50,26 @@ namespace Event
 		REPETATIVE
 	};
 	
+	
+	enum class TimerStatus
+	{
+		RUNNING,
+		STOPPED,
+		EXPIRED
+	};
+	
 	class ITimer 
 	{
 		public:
 		ITimer() = default;
-		~ITimer() = default;
+		virtual ~ITimer() = default;
 		
 		virtual TimerType & Type() = 0;
 		virtual void Callback(TimerCallback callback) = 0;		
 		virtual bool Start() = 0;
 		virtual bool Stop() = 0;
 		virtual bool Reset() = 0;
-		virtual ITimer * Clone() = 0;
-		virtual void Release() = 0;
+		virtual TimerStatus & Status() = 0;
 				
 	};
 	
@@ -73,9 +80,7 @@ namespace Event
 		TimerManager();
 		
 		
-		public:
-		
-		
+		public:		
 		virtual ~TimerManager() = default;
 		static TimerManager * Instance();
 		bool Initialise();

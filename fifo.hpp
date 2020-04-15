@@ -116,10 +116,10 @@ namespace Event {
 
 
 	template<typename T>
-	class Fifo<unique_ptr<T>>
+	class Fifo<UniquePtr<T>>
 	{
 		private:
-		unique_ptr<T> * queue;
+		UniquePtr<T> * queue;
 		int queue_size;
 		int head,tail;
 		int max_size;
@@ -130,23 +130,23 @@ namespace Event {
 
 
 
-		Fifo<unique_ptr<T>>(): max_size(CONFIG_FIFO_SIZE)
+		Fifo<UniquePtr<T>>(): max_size(CONFIG_FIFO_SIZE)
 		{
-			queue = new unique_ptr<T>[CONFIG_FIFO_SIZE];
+			queue = new UniquePtr<T>[CONFIG_FIFO_SIZE];
 			queue_size = 0;
 			head = 0;
 			tail=0;
 
 		}
 
-		~Fifo<unique_ptr<T>>()
+		~Fifo<UniquePtr<T>>()
 		{
 			delete [] queue;
 		}
 
 
 
-		bool Push(unique_ptr<T> element)
+		bool Push(UniquePtr<T> element)
 		{
 			if(tail == max_size){
 				tail=0;
@@ -157,7 +157,7 @@ namespace Event {
 			return true;
 		}
 
-		unique_ptr<T>  Pop()
+		UniquePtr<T>  Pop()
 		{
 			if(head == max_size){
 				head = 0;
@@ -165,7 +165,7 @@ namespace Event {
 
 			queue_size--;
 
-			unique_ptr<T> temp = Event::move(queue[head++]);
+			UniquePtr<T> temp = Event::move(queue[head++]);
 
 			return temp;
 

@@ -111,7 +111,7 @@ namespace Event
 		
 		~EventManager() = default;
 		
-		bool Trigger(unique_ptr<Event> event);
+		bool Trigger(UniquePtr<Event> event);
 		bool Trigger(InterruptHandler handler);
 		bool Triggar(TimerHandler handler);
 		bool Run();
@@ -119,7 +119,7 @@ namespace Event
 		static EventManager & Instance();
 		
 		private:
-		Fifo<unique_ptr<Event>> event_buffer[CONFIG_EVENT_MAX_PRIORITY];
+		Fifo<UniquePtr<Event>> event_buffer[CONFIG_EVENT_MAX_PRIORITY];
 		Fifo<TimerHandler> timer_handler_buffer;
 		Fifo<InterruptHandler> interrupt_bufer;
 		
