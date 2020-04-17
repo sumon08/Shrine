@@ -13,7 +13,7 @@
 
 namespace Hardware
 {
-	TickTimer timer; 
+	TickTimer TickTimer::object; 
 	
 	void DefaultHandler()
 	{
@@ -41,13 +41,13 @@ namespace Hardware
 		OCR0 = 0x35;
 		TCCR0 = (1 << WGM01) | (1 << CS02) | (1 << CS00);
 		TIMSK |= 1 << OCIE0;	
-		
+		sei();
 		return true;	
 	}
 	
 	TickTimer * TickTimer::Instance()
 	{
-		return &timer;
+		return &object;
 	}
 	
 }
@@ -56,5 +56,6 @@ namespace Hardware
 
 ISR(TIMER0_COMP_vect)
 {
-	Hardware::timer.timer_handler();
+	Hardware::TickTimer * t = Hardware::TickTimer::Instance();
+	t->timer_handler();
 }

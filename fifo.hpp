@@ -44,6 +44,7 @@ namespace Event {
 
 
 	#define LIST_DEFAULT_SIZE       10
+	
 
 	template<typename T>
 	class Fifo
@@ -60,7 +61,7 @@ namespace Event {
 
 
 
-		Fifo<T>(): max_size(CONFIG_FIFO_SIZE)
+		Fifo(): max_size(CONFIG_FIFO_SIZE)
 		{
 			queue = new T[CONFIG_FIFO_SIZE];
 			queue_size = 0;
@@ -69,7 +70,7 @@ namespace Event {
 
 		}
 
-		~Fifo<T>()
+		~Fifo()
 		{
 			delete [] queue;
 		}
@@ -85,16 +86,22 @@ namespace Event {
 			return true;
 		}
 
-		T  Pop()
+		T  Pop(bool * result)
 		{
 			if(head == max_size){
 				head = 0;
+			}
+			
+			if(queue_size == 0)
+			{
+				*result = false;
+				return T();
 			}
 
 			queue_size--;
 
 			T temp = queue[head++];
-
+			*result = true;
 			return temp;
 
 		}
@@ -130,7 +137,7 @@ namespace Event {
 
 
 
-		Fifo<UniquePtr<T>>(): max_size(CONFIG_FIFO_SIZE)
+		Fifo(): max_size(CONFIG_FIFO_SIZE)
 		{
 			queue = new UniquePtr<T>[CONFIG_FIFO_SIZE];
 			queue_size = 0;
@@ -139,7 +146,7 @@ namespace Event {
 
 		}
 
-		~Fifo<UniquePtr<T>>()
+		~Fifo()
 		{
 			delete [] queue;
 		}
@@ -161,6 +168,10 @@ namespace Event {
 		{
 			if(head == max_size){
 				head = 0;
+			}
+			if (queue_size == 0)
+			{
+				return UniquePtr<T>();
 			}
 
 			queue_size--;

@@ -36,7 +36,7 @@ namespace Event
 		TimerType type;
 		TickType timer_tick;
 		TimerStatus status;
-		SharedPtr<TimerNode> pNext; // need to be a weal_ptr here. Must need to careful with self reference.
+		TimerNode * pNext;
 	};
 	
 	
@@ -49,212 +49,254 @@ namespace Event
 		
 		Timer()
 		{
+			node = new TimerNode();
 			node->pNext = NULL;
 			node->func_ptr = DefaultTimerHandler;
+			node->status = TimerStatus::STOPPED;
+		}
+		
+		~Timer()
+		{
+			if (node->status == TimerStatus::RUNNING)
+			{
+				Stop();
+			}
+			delete node;
 		}
 		
 		
 		
 		
-		TimerType & Type();
+		const TimerType Type() const;
+		void Type(const TimerType type);
+		
+		 
 		void Callback(TimerCallback callback);
 		bool Start();
 		bool Stop();
 		bool Reset();
-		TimerStatus & Status();
+		
+		
+		const TimerStatus Status() const; 
+		void Status(const TimerStatus status);
+		
+		
+		
+		const TickType Period() const;
+		void Period(const TickType & tick);
+		
 		
 		public:
-		SharedPtr<TimerNode> node;
+		TimerNode * node;
 		
 	};
 	
 	
 	
+	SharedPtr<ITimer> TimerInstantiate()
+	{
+		return SharedPtr<Timer>(new Timer());
+	}
 	
-	
-	class TimerManagerPrivate : public TimerManager
+	class TimerManager 
 	{
 		public:
-		TimerManagerPrivate() : tick_timer(Hardware::TickTimer::Instance())
+		TimerManager() 
 		{
-			tick_timer->Initialise(TimerTickHandler);
+			pActive = NULL;
+			pExpired = NULL;
+			pNew = NULL;
+			counter = 0;
 		}
 		
 		
-		~TimerManagerPrivate() = default;
-		ITimer * Create();
+		~TimerManager() = default;
 		
 		public:
-		Hardware::TickTimer * tick_timer;
 		uint16_t counter;
 		
-		SharedPtr<TimerNode> pActive;
-		SharedPtr<TimerNode> pExpired;
-		SharedPtr<TimerNode> pStopped;
+		TimerNode * pActive;
+		TimerNode * pExpired;
+		TimerNode * pNew;
 		
 	};
 	
-	static TimerManagerPrivate manager;
 	
-	TimerStatus & Timer::Status()
+	
+	static TimerManager manager;
+	
+	void InitializeTimer()
+	{
+		Hardware::TickTimer::Instance()->Initialise(TimerTickHandler);
+	}
+	
+	const TimerStatus Timer::Status() const
 	{
 		return node->status;
 	}
 	
+	void Timer::Status(const TimerStatus status)
+	{
+		node->status = status;
+	}
 	
-	TimerType & Timer::Type()
+	
+	const TimerType Timer::Type() const
 	{
 		return node->type;
 	}
+	
+	void Timer::Type(const TimerType type)
+	{
+		node->type = type;
+	}
+		
+	const TickType Timer::Period() const
+	{
+		return node->timer_tick;
+	}
+	void Timer::Period(const TickType & tick)
+	{
+		node->timer_tick = tick;
+	}
+	
+	
 	void Timer::Callback( TimerCallback callback)
 	{
 		node->func_ptr = callback;
 	}
 	bool Timer::Start()
 	{
-		bool ret = false;
-		if(node->status != TimerStatus::STOPPED)
+		if( !node && node->status != TimerStatus::STOPPED)
 			return false;
-			
-		if (!manager.pActive)
-		{
-			manager.counter = 0;
-			manager.pActive = node;
-			node->status = TimerStatus::RUNNING;
-			return true;
-		}
 		
-		if(manager.counter == 0)
-		{
-			SharedPtr<TimerNode> pnode = manager.pActive;
-			SharedPtr<TimerNode> prev_node;
-			while(1)
-			{
-				if (node->counter < pnode->counter)
-				{
-					node->pNext = pnode;
-					if(!prev_node)
-					{
-						manager.pActive = node;
-					}
-					else
-					{
-						prev_node->pNext = node;
-					}
-					return true;
-				}
-				else
-				{
-					prev_node = pnode;
-					pnode= pnode->pNext;
-				}
-			}
-		}
-		
-		SharedPtr<TimerNode> segment = manager.pActive;
-		while(1)
-		{
-			if(segment->counter < manager.counter)
-				break;
-			else
-				segment = segment->pNext;
-		}
-
-		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
-		if(diff > node->timer_tick.Tick())
-		{
-			node->counter = manager.counter + node->timer_tick.Tick();
-			SharedPtr<TimerNode> pnode = manager.pActive;
-			SharedPtr<TimerNode> prev;
-			while(pnode)
-			{
-				if(node->counter < node->counter)
-				{
-					node->pNext = manager.pActive;
-					manager.pActive = node;
-				}
-				else
-				{
-					if(pnode->counter < manager.counter)
-					{
-						if(prev)
-						{
-							node->pNext = pnode;
-							prev->pNext = node;
-							break;
-						}
-					}
-				}
-				prev = pnode;
-				pnode = node->pNext;
-			}
-		}
-		else
-		{
-			node->counter = node->timer_tick.Tick() - diff;
-		}
-		return ret;
+		node->pNext = manager.pNew;
+		manager.pNew = node;
+		node->status = TimerStatus::RUNNING;
+		return true;
 	}
 	bool Timer::Stop()
 	{
-		return true;
+		TimerNode * pnode = manager.pActive;
+		TimerNode * prev = NULL;
+		while(1)
+		{
+			if(pnode == node)
+			{
+				if (prev == NULL)
+				{
+					manager.pActive = pnode->pNext;
+				}
+				else
+				{
+					prev->pNext = pnode->pNext;
+				}
+				node->status = TimerStatus::STOPPED;
+				return true;
+			}
+		}
+		return false;
 		
 	}
 	bool Timer::Reset()
 	{
-		return true;
-	}
-	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	ITimer * TimerManagerPrivate::Create()
-	{
-		Timer * tb = new Timer();
-		return (ITimer *)tb;
-	}
-	
-	
-	
-	
-	TimerManager * TimerManager::Instance()
-	{
-		return & manager;
-	}
-	
-	TimerManager::TimerManager()
-	{
+		if ( !node || node->status != TimerStatus::RUNNING)
+		{
+			return false;
+		}
 		
-	}
-	
-	
-	bool TimerManager::Initialise()
-	{
+		TimerNode * pnode = manager.pActive;
+		TimerNode * prev = NULL;
+		while(1)
+		{
+			if(pnode == node)
+			{
+				if (prev == NULL)
+				{
+					manager.pActive = pnode->pNext;
+				}
+				else
+				{
+					prev->pNext = pnode->pNext;
+				}
+				node->status = TimerStatus::RUNNING;
+				node->pNext = manager.pNew;
+				manager.pNew = node;
+				return true;
+			}
+		}
+		
 		return true;
 	}
+	
+	
+	
+	
 	
 	void TimerHandlerpvt()
 	{
-		if (manager.pExpired)
+		TimerNode * node = manager.pActive;
+		TimerNode * prev = NULL;
+		while (node != NULL)
 		{
-			SharedPtr<TimerNode> tb = manager.pExpired;
-			while(tb)
+			if (node->counter == manager.counter)
 			{
-				tb->func_ptr();
-				if(tb->type == TimerType::REPETATIVE)
+				node->func_ptr();
+				if (node->type == TimerType::REPETATIVE)
 				{
-					//tb->Start();
+					uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
+					if (diff < node->timer_tick.Tick())
+					{
+						node->counter = node->timer_tick.Tick() - diff;
+					}
+					else
+					{
+						node->counter = node->timer_tick.Tick();
+					}
+				}
+				else
+				{
+					if(prev == NULL)
+					{
+						 manager.pActive = node->pNext;
+					}
+					else
+					{
+						prev->pNext = node->pNext;
+					}
+				}
+				node = node->pNext;
+			}
+		}
+		
+		if (manager.pNew != NULL)
+		{
+			TimerNode * node;
+			
+			while(1)
+			{
+				node = manager.pNew;
+				manager.pNew = node->pNext;
+				node->pNext = manager.pActive;
+				manager.pActive = node;
+				uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
+				if (diff < node->timer_tick.Tick())
+				{
+					node->counter = node->timer_tick.Tick() - diff;
+				}
+				else
+				{
+					node->counter = node->timer_tick.Tick();
+				}
+				if (manager.pNew == NULL)
+				{
+					break;
 				}
 			}
 		}
 	}
+	
+	TimerHandler handler(TimerHandlerpvt);
 	
 	void TimerTickHandler()
 	{
@@ -263,32 +305,7 @@ namespace Event
 		{
 			manager.counter = 0;
 		}
-		
-		if (manager.pActive)
-		{
-			SharedPtr<TimerNode> tb = manager.pActive;
-			while(tb)
-			{
-				if (tb->counter == manager.counter)
-				{
-					SharedPtr<TimerNode> ttb = tb;
-					ttb->pNext = manager.pExpired;
-					manager.pExpired = ttb;
-					tb = tb->pNext;
-				}
-				else
-				{
-					break;
-				}
-			}
-			
-			if (manager.pExpired)
-			{
-				TimerHandler handler;
-				handler.callback = TimerHandlerpvt;
-				EventManager &evm = EventManager::Instance();
-				evm.Triggar(handler);
-			}
-		}
+		SharedPtr<ISystem> system = System();
+		system->Trigger(handler);
 	}
 }

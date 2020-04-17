@@ -113,35 +113,34 @@ namespace Event
 	
 	
 	
-	template <typename T>
+	
 	struct RefCounter
 	{
-		RefCounter()
-		{
-			count = 0;
-		}
+		RefCounter(){	count = 0;}
 		uint16_t count;
-		T * ptr;
 	};
 	
 	template <typename T> 
 	class SharedPtr
-	{
+	{		
+		protected:
 		
+		template <typename Y> friend class SharedPtr;
 		
 		public:
 		SharedPtr() noexcept
 		{
 			obj_ptr = NULL;
+			pointer = NULL;
 		}
 		
 		SharedPtr(T * ptr)
 		{
 			if(ptr != NULL)
 			{
-				obj_ptr = new RefCounter<T>();
+				obj_ptr = new RefCounter();
 				obj_ptr->count = 1;
-				obj_ptr->ptr = ptr;
+				pointer = ptr;
 			}
 			else
 			{
@@ -149,26 +148,63 @@ namespace Event
 			}
 		}
 		
-		SharedPtr(const SharedPtr<T> & ptr)
+		SharedPtr(const SharedPtr & ptr)
 		{
 			
 			if(ptr.obj_ptr != NULL)
 			{
 				obj_ptr= ptr.obj_ptr;
+				pointer = ptr.pointer;
 				obj_ptr->count++;
 			}
 			else
 			{
 				obj_ptr = NULL;
+				pointer = NULL;
 			}
 		}
 		
-		SharedPtr(const SharedPtr<T> && ptr)
+		template <typename Y>
+		SharedPtr(const SharedPtr<Y> & r)
+		{
+			if (r.obj_ptr != NULL)
+			{
+				obj_ptr = r.obj_ptr;
+				pointer = r.pointer;
+				obj_ptr->count++;
+			}
+			else
+			{
+				obj_ptr = NULL;
+				pointer = NULL;
+			}
+		}
+		
+		SharedPtr(SharedPtr<T> && ptr)
 		{
 			if(ptr.obj_ptr != NULL)
 			{
 				obj_ptr= ptr.obj_ptr;
+				pointer = ptr.pointer;
 				ptr.obj_ptr = NULL;
+				ptr.pointer = NULL;
+			}
+		}
+		
+		template <typename Y>
+		SharedPtr(SharedPtr<Y> && ptr)
+		{
+			if(ptr.obj_ptr != NULL)
+			{
+				obj_ptr= ptr.obj_ptr;
+				pointer = ptr.pointer;
+				ptr.obj_ptr = NULL;
+				ptr.pointer = NULL;
+			}
+			else
+			{
+				obj_ptr = NULL;
+				pointer = NULL;
 			}
 		}
 		
@@ -176,9 +212,9 @@ namespace Event
 		{
 			if(ptr)
 			{
-				obj_ptr = new RefCounter<T>();
+				obj_ptr = new RefCounter();
 				obj_ptr->count = 1;
-				obj_ptr->ptr = ptr->release();
+				pointer = ptr->release();
 			}
 			else
 			{
@@ -191,51 +227,38 @@ namespace Event
 		}
 		
 		
-		SharedPtr<T> & operator=(const SharedPtr<T> & ptr)
+		SharedPtr & operator=(const SharedPtr<T> & ptr)
 		{
 			if(ptr.obj_ptr != obj_ptr)
 			{
 				Delete();
 				obj_ptr = ptr.obj_ptr;
+				pointer = ptr.pointer;
 				obj_ptr->count++;
 			}
 			
 			return *this;
 		}
 		
-		SharedPtr<T> & operator=(SharedPtr<T> && ptr)
+		SharedPtr & operator=(SharedPtr && ptr)
 		{
 			if (ptr.obj_ptr != obj_ptr)
 			{
 				Delete();
 				obj_ptr = ptr.obj_ptr;
+				pointer = ptr.pointer;
 				ptr.obj_ptr = NULL;
+				ptr.pointer = NULL;
 			}
 			return *this;
 		}
 		
-		SharedPtr<T> & operator=(UniquePtr<T> &&ptr)
+		SharedPtr & operator=(UniquePtr<T> &&ptr)
 		{
-			if(obj_ptr != NULL)
-			{
-				if (obj_ptr->count == 1)
-				{
-					obj_ptr->ptr = ptr->Release();
-				}
-				else
-				{
-					obj_ptr->count --;
-					obj_ptr = new RefCounter<T>();
-					obj_ptr->count = 1;
-					obj_ptr->ptr = ptr->Release();
-				}
-			}
+			if(ptr)
+				Reset(ptr->Release());
 			else
-			{
-				obj_ptr = new RefCounter<T>();
-				obj_ptr->count = 1;
-				obj_ptr->ptr = ptr->Release();
-			}
+				Reset();
 			return *this;
 		}
 		
@@ -251,43 +274,43 @@ namespace Event
 				obj_ptr->count --;
 				if(obj_ptr->count == 0)
 				{
-					delete obj_ptr->ptr;
-					obj_ptr->ptr = ptr;
+					delete pointer;
+					pointer = ptr;
 					obj_ptr->count = 1;
-				}
-				else
-				{
-					obj_ptr = new RefCounter<T>();
-					obj_ptr->ptr = ptr;
-					obj_ptr->count = 1;
-				}				
-				
+					return;
+				}	
 			}
+			
+			obj_ptr = new RefCounter();
+			pointer = ptr;
+			obj_ptr->count = 1;
 		}
 		
 		void Swap(SharedPtr<T> & ptr)
 		{
-			RefCounter<T> * ref = obj_ptr;
+			RefCounter * ref = obj_ptr;
+			T * _p = pointer;
+			
 			obj_ptr = ptr.obj_ptr;
+			pointer = ptr.pointer;
+			
 			ptr.obj_ptr = ref;
+			ptr.pointer = _p;
 		}
 		
 		T * Get() const noexcept
 		{
-			T * ret = NULL;
-			if(obj_ptr != NULL && obj_ptr->ptr != NULL)
-				ret = obj_ptr->ptr;
-			return ret;
+			return pointer;
 		}
 		
 		T & operator*()
 		{
-			return *obj_ptr->ptr;
+			return *pointer;
 		}
 		
 		T * operator->()
 		{
-			return obj_ptr->ptr;
+			return pointer;
 		}
 		
 		uint16_t UseCount() const noexcept
@@ -309,16 +332,18 @@ namespace Event
 			obj_ptr->count--;
 			if(obj_ptr->count == 0)
 			{
-				delete obj_ptr->ptr;			
+				delete pointer;			
 				delete obj_ptr;
-			}
-			obj_ptr = NULL;
-		}
-		
-		
+				obj_ptr = NULL;
+				pointer = NULL;
+			}		
+		}		
 		private:
-		RefCounter<T> * obj_ptr;
+		RefCounter * obj_ptr;
+		T * pointer;
 	};
+	
+	
 	
 	template < typename T >
 	bool operator==( const SharedPtr<T>& lhs, const SharedPtr<T>& rhs ) noexcept
@@ -351,6 +376,13 @@ namespace Event
 		}
 		return true;
 	}
+	
+	
+	//template <typename T>
+	//SharedPtr<T> static_pointer_cast(SharedPtr<T> & r)
+	//{
+		//
+	//}
 }
 
 

@@ -37,7 +37,7 @@ SOFTWARE.
 
 
 #include "ticktype.hpp"
-
+#include "memory.hpp"
 
 
 namespace Event 
@@ -64,28 +64,26 @@ namespace Event
 		ITimer() = default;
 		virtual ~ITimer() = default;
 		
-		virtual TimerType & Type() = 0;
+		virtual const TimerType Type() const = 0;
+		virtual void Type(const TimerType type) = 0;
+		
+		virtual const TickType Period() const = 0;
+		virtual void Period(const TickType & tick) = 0;
+		
 		virtual void Callback(TimerCallback callback) = 0;		
 		virtual bool Start() = 0;
 		virtual bool Stop() = 0;
 		virtual bool Reset() = 0;
-		virtual TimerStatus & Status() = 0;
+		
+		
+		virtual const TimerStatus Status() const = 0;
+		virtual void Status(const TimerStatus status) = 0;
 				
 	};
 	
 	
-	class TimerManager
-	{
-		protected:
-		TimerManager();
-		
-		
-		public:		
-		virtual ~TimerManager() = default;
-		static TimerManager * Instance();
-		bool Initialise();
-		virtual ITimer * Create();
-	};
+	void InitializeTimer();
+	SharedPtr<ITimer> TimerInstantiate();
 }
 
 
