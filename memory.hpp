@@ -42,7 +42,7 @@ SOFTWARE.
 #include <stdint.h>
 
 
-namespace Event
+namespace Shrine
 {
 	#ifndef NULL
 		#define NULL (void *)0

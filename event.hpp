@@ -40,7 +40,7 @@ SOFTWARE.
 #include "timer.hpp"
 
 
-namespace Event 
+namespace Shrine 
 {
 	
 	
@@ -54,7 +54,7 @@ namespace Event
 		const uint8_t Priority() const;
 		void Priority(const uint8_t priority);
 		
-		virtual void EventHandler() = 0;
+		virtual void Handler() = 0;
 		
 		private:
 		uint8_t priority;

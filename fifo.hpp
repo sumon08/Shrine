@@ -39,21 +39,36 @@ SOFTWARE.
 #include "config.hpp"
 
 
-namespace Event {
-
-
-
-	#define LIST_DEFAULT_SIZE       10
+namespace Shrine
+{
+	template <typename T>
+	struct StorageNode
+	{
+		StorageNode()
+		{
+			pNext = NULL;
+		}
+		T value;
+		StorageNode * pNext;
+	};
+	
+	
+	template <typename T>
+	struct StorageNode<UniquePtr<T>>
+	{
+		UniquePtr<T> value;
+		StorageNode<UniquePtr<T>> * pNext;
+	};
 	
 
 	template<typename T>
 	class Fifo
 	{
 		private:
-		T * queue;
+		StorageNode<T> * pHead;
+		StorageNode<T> * pTail;
+		StorageNode<T> * pFree;
 		int queue_size;
-		int head,tail;
-		int max_size;
 
 
 
@@ -61,49 +76,85 @@ namespace Event {
 
 
 
-		Fifo(): max_size(CONFIG_FIFO_SIZE)
+		Fifo()
 		{
-			queue = new T[CONFIG_FIFO_SIZE];
+			pHead = NULL;
+			pFree = NULL;
 			queue_size = 0;
-			head = 0;
-			tail=0;
-
 		}
 
 		~Fifo()
 		{
-			delete [] queue;
+			StorageNode<T> * node = pHead;
+			while(1)
+			{
+				 if (node == NULL)
+				 {
+					 break;
+				 }
+				 StorageNode<T> * pnode = node->pNext;
+				 delete node;
+				 node = pnode;
+			}
+			
+			node = pFree;
+			while(1)
+			{
+				if (node == NULL)
+				{
+					break;
+				}
+				StorageNode<T> * pnode = node->pNext;
+				delete node;
+				node = pnode;
+			}
 		}
 
-		bool Push(T element)
+		bool Push(const T & element)
 		{
-			if(tail == max_size){
-				tail=0;
+			if(pFree == NULL){
+				pFree = new StorageNode<T>();
 			}
-			queue[tail] = element;
-			tail++;
+			
+			StorageNode<T> * node = pFree;
+			pFree = node->pNext;
+			node->value = element;
+			node->pNext = NULL;
+			if(pHead == NULL){
+				pHead = node;
+			}
+			else {
+				StorageNode<T> * pnode = pHead;
+				while(1)
+				{
+					if(pnode->pNext == NULL)
+					{
+						pnode->pNext = node;
+						break;
+					}
+					pnode = pnode->pNext;
+				}
+			}
+			
 			queue_size++;
 			return true;
 		}
+		
 
-		T  Pop(bool * result)
+		T  Pop()
 		{
-			if(head == max_size){
-				head = 0;
-			}
-			
 			if(queue_size == 0)
 			{
-				*result = false;
 				return T();
 			}
 
 			queue_size--;
 
-			T temp = queue[head++];
-			*result = true;
-			return temp;
-
+			StorageNode<T> * node = pHead;
+			pHead = pHead->pNext;
+			node->pNext = pFree;
+			pFree = node;
+			return node->value;
 		}
 
 		int Length()
@@ -113,11 +164,6 @@ namespace Event {
 		bool Empty()
 		{
 			return (queue_size==0);
-		}
-
-		int  Capacity()
-		{
-			return max_size;
 		}
 	};
 
@@ -126,10 +172,10 @@ namespace Event {
 	class Fifo<UniquePtr<T>>
 	{
 		private:
-		UniquePtr<T> * queue;
+		StorageNode<UniquePtr<T>> * pHead;
+		StorageNode<UniquePtr<T>> * pTail;
+		StorageNode<UniquePtr<T>> * pFree;
 		int queue_size;
-		int head,tail;
-		int max_size;
 
 
 
@@ -137,46 +183,66 @@ namespace Event {
 
 
 
-		Fifo(): max_size(CONFIG_FIFO_SIZE)
+		Fifo()
 		{
-			queue = new UniquePtr<T>[CONFIG_FIFO_SIZE];
+			pHead = NULL;
+			pFree = NULL;
 			queue_size = 0;
-			head = 0;
-			tail=0;
-
 		}
 
 		~Fifo()
 		{
-			delete [] queue;
+			// add delete code here.
 		}
 
 
 
 		bool Push(UniquePtr<T> element)
 		{
-			if(tail == max_size){
-				tail=0;
+			if(pFree == NULL){
+				pFree = new StorageNode<UniquePtr<T>>();
 			}
-			queue[tail] = Event::move(element);
-			tail++;
+			
+			StorageNode<UniquePtr<T>> * node = pFree;
+			pFree = node->pNext;
+			node->value = move(element);
+			node->pNext = NULL;
+			if(pHead == NULL)
+			{
+				pHead = node;
+			}
+			else
+			{
+				StorageNode<UniquePtr<T>> * pnode = pHead;
+				while(1)
+				{
+					if(pnode->pNext == NULL)
+					{
+						pnode->pNext = node;
+						break;
+					}
+					pnode = pnode->pNext;
+				}
+			}
 			queue_size++;
 			return true;
 		}
 
 		UniquePtr<T>  Pop()
 		{
-			if(head == max_size){
-				head = 0;
-			}
-			if (queue_size == 0)
+			if(queue_size == 0)
 			{
 				return UniquePtr<T>();
 			}
 
 			queue_size--;
 
-			UniquePtr<T> temp = Event::move(queue[head++]);
+			StorageNode<UniquePtr<T>> * node = pHead;
+			UniquePtr<T> temp = move(node->value);
+			pHead = pHead->pNext;
+			node->pNext = pFree;
+			pFree = node;
+			
 
 			return temp;
 
@@ -191,10 +257,7 @@ namespace Event {
 			return (queue_size==0);
 		}
 
-		int Capacity()
-		{
-			return max_size;
-		}
+		
 	};
 }
 #endif //_FIFO_INCLUDE_H

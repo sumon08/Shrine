@@ -10,7 +10,7 @@
 #define INTERFACE_H_
 
 
-namespace Event 
+namespace Shrine 
 {
 	
 }

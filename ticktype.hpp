@@ -14,7 +14,7 @@
 
 
 
-namespace Event
+namespace Shrine
 {
 	
 	class TickType 
@@ -28,15 +28,21 @@ namespace Event
 		
 		TickType(uint16_t ms)
 		{
-			tick = (ms / CONFIG_TIMER_TICK_PERIOD_MS);
+			Tick(ms);
 		}
 		
 		~TickType() = default;
 		
 		//setter and getter
-		uint16_t & Tick()
+		const uint16_t Tick() const
 		{
 			return tick;
+		}
+		
+		void Tick(uint16_t ms)
+		{
+			tick = ms / CONFIG_TIMER_TICK_PERIOD_MS;
+			error = ms % CONFIG_TIMER_TICK_PERIOD_MS;
 		}
 		
 		const uint8_t Error() const

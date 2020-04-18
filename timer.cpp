@@ -13,7 +13,7 @@
 #include "event.hpp"
 #include "memory.hpp"
 
-namespace Event
+namespace Shrine
 {
 	
 	
@@ -104,8 +104,6 @@ namespace Event
 		TimerManager() 
 		{
 			pActive = NULL;
-			pExpired = NULL;
-			pNew = NULL;
 			counter = 0;
 		}
 		
@@ -116,8 +114,6 @@ namespace Event
 		uint16_t counter;
 		
 		TimerNode * pActive;
-		TimerNode * pExpired;
-		TimerNode * pNew;
 		
 	};
 	
@@ -167,11 +163,23 @@ namespace Event
 	}
 	bool Timer::Start()
 	{
-		if( !node && node->status != TimerStatus::STOPPED)
+		if( (node == NULL) && (node->status != TimerStatus::STOPPED))
 			return false;
 		
-		node->pNext = manager.pNew;
-		manager.pNew = node;
+		node->pNext = manager.pActive;
+		manager.pActive = node;
+		
+		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
+		
+		if(diff > node->timer_tick.Tick())
+		{
+			node->counter = manager.counter + node->timer_tick.Tick();
+		}
+		else
+		{
+			node->counter = node->timer_tick.Tick() - diff;
+		}
+		
 		node->status = TimerStatus::RUNNING;
 		return true;
 	}
@@ -200,33 +208,11 @@ namespace Event
 	}
 	bool Timer::Reset()
 	{
-		if ( !node || node->status != TimerStatus::RUNNING)
+		if (Stop())
 		{
-			return false;
+			Start();
 		}
-		
-		TimerNode * pnode = manager.pActive;
-		TimerNode * prev = NULL;
-		while(1)
-		{
-			if(pnode == node)
-			{
-				if (prev == NULL)
-				{
-					manager.pActive = pnode->pNext;
-				}
-				else
-				{
-					prev->pNext = pnode->pNext;
-				}
-				node->status = TimerStatus::RUNNING;
-				node->pNext = manager.pNew;
-				manager.pNew = node;
-				return true;
-			}
-		}
-		
-		return true;
+		return false;
 	}
 	
 	
@@ -251,7 +237,7 @@ namespace Event
 					}
 					else
 					{
-						node->counter = node->timer_tick.Tick();
+						node->counter = node->timer_tick.Tick() + manager.counter;
 					}
 				}
 				else
@@ -264,35 +250,11 @@ namespace Event
 					{
 						prev->pNext = node->pNext;
 					}
-				}
-				node = node->pNext;
-			}
-		}
-		
-		if (manager.pNew != NULL)
-		{
-			TimerNode * node;
-			
-			while(1)
-			{
-				node = manager.pNew;
-				manager.pNew = node->pNext;
-				node->pNext = manager.pActive;
-				manager.pActive = node;
-				uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
-				if (diff < node->timer_tick.Tick())
-				{
-					node->counter = node->timer_tick.Tick() - diff;
-				}
-				else
-				{
-					node->counter = node->timer_tick.Tick();
-				}
-				if (manager.pNew == NULL)
-				{
-					break;
+					node->status = TimerStatus::STOPPED;
 				}
 			}
+			prev = node;
+			node = node->pNext;
 		}
 	}
 	

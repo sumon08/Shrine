@@ -40,7 +40,7 @@ SOFTWARE.
 #include "memory.hpp"
 
 
-namespace Event 
+namespace Shrine 
 {
 	typedef void (*TimerCallback)();
 	

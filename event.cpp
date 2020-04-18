@@ -11,7 +11,7 @@
 
 
 
-namespace Event
+namespace Shrine
 {
 	
 	void DefaultCallbackHandler()
@@ -130,39 +130,29 @@ namespace Event
 		
 		while(1)
 		{
-			#include <avr/io.h>
-			PORTA ^= 1 << PA1;
 			if (interrupt_bufer.Length() > 0)
 			{
-				bool result;
-				InterruptHandler handle = interrupt_bufer.Pop(&result);
-				if(result)
-				{
-					handle();
-				}
+				InterruptHandler handle = interrupt_bufer.Pop();
+				handle();
 			}
 			else if(timer_handler_buffer.Length() > 0)
 			{
-				bool result;
-				TimerHandler handle = timer_handler_buffer.Pop(&result);
-				if(result)
-				{
-					handle();
-				}
+				TimerHandler handle = timer_handler_buffer.Pop();
+				handle();
 			}
 			else
 			{
-				//for (int i = 0; i < CONFIG_EVENT_MAX_PRIORITY; i++)
-				//{
-					//if (event_buffer[i].Length() > 0)
-					//{
-						//UniquePtr<IEvent> event = event_buffer[i].Pop();
-						//if (event)
-						//{
-							//event->EventHandler();
-						//}
-					//}
-				//}
+				for (int i = 0; i < CONFIG_EVENT_MAX_PRIORITY; i++)
+				{
+					if (event_buffer[i].Length() > 0)
+					{
+						UniquePtr<IEvent> event = event_buffer[i].Pop();
+						if (event)
+						{
+							event->Handler();
+						}
+					}
+				}
 			}
 		}
 		return true;
@@ -177,5 +167,11 @@ namespace Event
 		}
 		return manager_instance;
 	}
+	
+	
+	//SharedPtr<ITimer> begin(SharedPtr<ISystem> & s)
+	//{
+		//return s->CreateTimer();
+	//}
 }
 
