@@ -29,75 +29,6 @@ namespace Shrine
 	}
 	
 	
-	struct TimerNode
-	{
-		uint16_t counter;
-		TimerCallback func_ptr;
-		TimerType type;
-		TickType timer_tick;
-		TimerStatus status;
-		TimerNode * pNext;
-	};
-	
-	
-	class Timer : public ITimer
-	{
-		
-		
-		
-		public:
-		
-		Timer()
-		{
-			node = new TimerNode();
-			node->pNext = NULL;
-			node->func_ptr = DefaultTimerHandler;
-			node->status = TimerStatus::STOPPED;
-		}
-		
-		~Timer()
-		{
-			if (node->status == TimerStatus::RUNNING)
-			{
-				Stop();
-			}
-			delete node;
-		}
-		
-		
-		
-		
-		const TimerType Type() const;
-		void Type(const TimerType type);
-		
-		 
-		void Callback(TimerCallback callback);
-		bool Start();
-		bool Stop();
-		bool Reset();
-		
-		
-		const TimerStatus Status() const; 
-		void Status(const TimerStatus status);
-		
-		
-		
-		const TickType Period() const;
-		void Period(const TickType & tick);
-		
-		
-		public:
-		TimerNode * node;
-		
-	};
-	
-	
-	
-	SharedPtr<ITimer> TimerInstantiate()
-	{
-		return SharedPtr<Timer>(new Timer());
-	}
-	
 	class TimerManager 
 	{
 		public:
@@ -111,8 +42,7 @@ namespace Shrine
 		~TimerManager() = default;
 		
 		public:
-		uint16_t counter;
-		
+		uint16_t counter;		
 		TimerNode * pActive;
 		
 	};
@@ -126,61 +56,82 @@ namespace Shrine
 		Hardware::TickTimer::Instance()->Initialise(TimerTickHandler);
 	}
 	
+	Timer::Timer()
+	{
+		node.pNext = NULL;
+		node.func_ptr = DefaultTimerHandler;
+		node.status = TimerStatus::STOPPED;
+	}
+	
+	
+	
+	
+	Timer::~Timer()
+	{
+		if (node.status == TimerStatus::RUNNING)
+		{
+			Stop();
+		}
+	}
+	
+	
+	
+	
 	const TimerStatus Timer::Status() const
 	{
-		return node->status;
+		return node.status;
 	}
 	
 	void Timer::Status(const TimerStatus status)
 	{
-		node->status = status;
+		node.status = status;
 	}
 	
 	
 	const TimerType Timer::Type() const
 	{
-		return node->type;
+		return node.type;
 	}
 	
 	void Timer::Type(const TimerType type)
 	{
-		node->type = type;
+		node.type = type;
 	}
 		
 	const TickType Timer::Period() const
 	{
-		return node->timer_tick;
+		return node.timer_tick;
 	}
 	void Timer::Period(const TickType & tick)
 	{
-		node->timer_tick = tick;
+		node.timer_tick = tick;
 	}
 	
 	
 	void Timer::Callback( TimerCallback callback)
 	{
-		node->func_ptr = callback;
+		node.func_ptr = callback;
 	}
 	bool Timer::Start()
 	{
-		if( (node == NULL) && (node->status != TimerStatus::STOPPED))
+		if(node.status != TimerStatus::STOPPED)
 			return false;
 		
-		node->pNext = manager.pActive;
-		manager.pActive = node;
+		node.pNext = manager.pActive;
+		manager.pActive = &node;
 		
 		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
 		
-		if(diff > node->timer_tick.Tick())
+		if(diff > node.timer_tick.Tick())
 		{
-			node->counter = manager.counter + node->timer_tick.Tick();
+			node.counter = manager.counter + node.timer_tick.Tick();
 		}
 		else
 		{
-			node->counter = node->timer_tick.Tick() - diff;
+			node.counter = node.timer_tick.Tick() - diff;
 		}
 		
-		node->status = TimerStatus::RUNNING;
+		node.status = TimerStatus::RUNNING;
 		return true;
 	}
 	bool Timer::Stop()
@@ -189,7 +140,7 @@ namespace Shrine
 		TimerNode * prev = NULL;
 		while(1)
 		{
-			if(pnode == node)
+			if(pnode == &node)
 			{
 				if (prev == NULL)
 				{
@@ -199,7 +150,7 @@ namespace Shrine
 				{
 					prev->pNext = pnode->pNext;
 				}
-				node->status = TimerStatus::STOPPED;
+				node.status = TimerStatus::STOPPED;
 				return true;
 			}
 		}
@@ -267,7 +218,7 @@ namespace Shrine
 		{
 			manager.counter = 0;
 		}
-		SharedPtr<ISystem> system = System();
-		system->Trigger(handler);
+		System system = System::Instance();
+		system.Trigger(handler);
 	}
 }

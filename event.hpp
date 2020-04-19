@@ -46,6 +46,14 @@ namespace Shrine
 	
 	typedef void (*Callback)();
 	
+	enum class EventType
+	{
+		SIMPLE,
+		TIMED,
+		STEPPED,
+	};
+	
+	
 	class IEvent
 	{
 		public:
@@ -53,12 +61,30 @@ namespace Shrine
 		virtual ~IEvent();
 		const uint8_t Priority() const;
 		void Priority(const uint8_t priority);
-		
+		const EventType Type() const;		
 		virtual void Handler() = 0;
 		
 		private:
 		uint8_t priority;
 		
+		protected:
+		EventType event_type;
+		
+	};
+	
+	
+	class ITimedEvent : public IEvent
+	{
+		public:
+		ITimedEvent();
+		virtual ~ITimedEvent();
+		
+		const TickType Period();
+		void Period(const TickType & period);		
+		void StartTimer();
+		
+		private:
+		Timer event_timer;
 	};
 	
 	struct InterruptHandler
@@ -91,28 +117,19 @@ namespace Shrine
 		}
 	};
 	
-	
-	
-	class ISystem
+	class System
 	{
 		public:
-		ISystem() = default;
-		virtual ~ISystem() = default;
+		System() = default;
+		~System() = default;
 		
-		virtual bool Run() = 0;
-		virtual bool Trigger(UniquePtr<IEvent> event) = 0; 
-		virtual bool Trigger(InterruptHandler handler) = 0; 
-		virtual bool Trigger(TimerHandler handler) = 0; 
+		static System & Instance();
 		
-		virtual SharedPtr<ITimer> CreateTimer() = 0;
-		
+		bool Run();
+		bool Trigger(UniquePtr<IEvent> event); 
+		bool Trigger(InterruptHandler handler); 
+		bool Trigger(TimerHandler handler); 		
 	};
-	
-	
-	SharedPtr<ISystem> System();
-	
-	
-	
 }
 
 #endif /* EVENT_H_ */

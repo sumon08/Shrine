@@ -15,6 +15,9 @@ class TestEvent : public Shrine::IEvent
 	{
 		PORTA ^= 1 << PA1;
 	}
+	
+	private:
+	int data;
 };
 
 
@@ -22,10 +25,10 @@ class TestEvent : public Shrine::IEvent
 void TestHandler()
 {
 	PORTA ^= 1 << PA0;
-	Shrine::SharedPtr<Shrine::ISystem> system = Shrine::System();
+	Shrine::System& system = Shrine::System::Instance();
 	Shrine::UniquePtr<Shrine::IEvent> event = Shrine::UniquePtr<Shrine::IEvent>(new TestEvent());
 	event->Priority(2);
-	system->Trigger(Shrine::move(event));
+	system.Trigger(Shrine::move(event));
 }
 
 
@@ -35,16 +38,16 @@ void TestHandler()
 int main(void)
 {
 	Shrine::InitializeTimer();
-	Shrine::SharedPtr<Shrine::ISystem> system = Shrine::System();
+	Shrine::System & system = Shrine::System::Instance();
 	DDRA |= 1 << PA0;
 	DDRA |= 1 << PA1;
 	
-	Shrine::SharedPtr<Shrine::ITimer> timer = system->CreateTimer();
-	timer->Callback(TestHandler);
-	timer->Type(Shrine::TimerType::REPETATIVE);
-	timer->Period(Shrine::TickType(200));
-	timer->Start();
-	system->Run();
+	Shrine::Timer timer;
+	timer.Callback(TestHandler);
+	timer.Type(Shrine::TimerType::REPETATIVE);
+	timer.Period(Shrine::TickType(200));
+	timer.Start();
+	system.Run();
 	
 	
 	while(1)

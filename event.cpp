@@ -13,42 +13,31 @@
 
 namespace Shrine
 {
-	
 	void DefaultCallbackHandler()
 	{
 		
 	}
 	
 	
-	class EventManager : public ISystem
+	class EventManager
 	{
 		
 		public:
 		EventManager();
 		~EventManager() = default;
 		
-		bool Trigger(UniquePtr<IEvent> event);
-		bool Trigger(InterruptHandler handler);
-		bool Trigger(TimerHandler handler);
-		bool Run();
-		
-		SharedPtr<ITimer> CreateTimer();
-		
-		private:
+		public:
 		Fifo<UniquePtr<IEvent>> event_buffer[CONFIG_EVENT_MAX_PRIORITY];
 		Fifo<TimerHandler> timer_handler_buffer;
 		Fifo<InterruptHandler> interrupt_bufer;
-		
-		
-		
-		
 	};
 	
-	
+	EventManager manager_instance;
 	
 	IEvent::IEvent()
 	{	
-		priority = CONFIG_EVENT_DEFAULT_PRIORITY;	
+		priority = CONFIG_EVENT_DEFAULT_PRIORITY;
+		event_type = EventType::SIMPLE;
 	}
 	
 	const uint8_t IEvent::Priority() const
@@ -61,11 +50,48 @@ namespace Shrine
 		this->priority = priority;
 	}
 	
-	
+	const EventType IEvent::Type() const
+	{
+		return event_type;
+	}
 	
 	IEvent::~IEvent()
 	{
 		
+	}
+	
+	
+	void TimedEventTimeoutCallback()
+	{
+		
+	}
+	
+	ITimedEvent::ITimedEvent() 
+	{
+		event_type = EventType::TIMED;
+		event_timer.Period(TickType(1000));
+		event_timer.Type(TimerType::REPETATIVE);
+		event_timer.Callback(TimedEventTimeoutCallback);
+	}
+	
+	ITimedEvent::~ITimedEvent()
+	{
+		
+	}
+	
+	const TickType ITimedEvent::Period()  
+	{
+		return event_timer.Period();
+	}
+	
+	void ITimedEvent::Period(const TickType & period)
+	{
+		event_timer.Period(period); 
+	}
+	
+	void ITimedEvent::StartTimer()
+	{
+		event_timer.Start();
 	}
 	
 	
@@ -100,56 +126,61 @@ namespace Shrine
 	}
 	
 	
-	SharedPtr<ITimer> EventManager::CreateTimer()
-	{
-		return TimerInstantiate();
-	}
 	
-	
-	bool EventManager::Trigger(UniquePtr<IEvent> event)
+	bool System::Trigger(UniquePtr<IEvent> event)
 	{
 		if (!event || event->Priority() >= CONFIG_EVENT_MAX_PRIORITY)
 		{
 			return false;
 		}
-		return event_buffer[event->Priority()].Push(move(event));
+		return manager_instance.event_buffer[event->Priority()].Push(move(event));
 		
 	}
-	bool EventManager::Trigger(InterruptHandler handler)
+	bool System::Trigger(InterruptHandler handler)
 	{
-		return interrupt_bufer.Push(handler);
+		return manager_instance.interrupt_bufer.Push(handler);
 	}
-	bool EventManager::Trigger(TimerHandler handler)
+	bool System::Trigger(TimerHandler handler)
 	{
-		return timer_handler_buffer.Push(handler);
+		return manager_instance.timer_handler_buffer.Push(handler);
 	}
 	
+	System shrine;
+	System & System::Instance()
+	{
+		return shrine;
+	}
 	
-	bool EventManager::Run()
+	bool System::Run()
 	{
 		
 		while(1)
 		{
-			if (interrupt_bufer.Length() > 0)
+			if (manager_instance.interrupt_bufer.Length() > 0)
 			{
-				InterruptHandler handle = interrupt_bufer.Pop();
+				InterruptHandler handle = manager_instance.interrupt_bufer.Pop();
 				handle();
 			}
-			else if(timer_handler_buffer.Length() > 0)
+			else if(manager_instance.timer_handler_buffer.Length() > 0)
 			{
-				TimerHandler handle = timer_handler_buffer.Pop();
+				TimerHandler handle = manager_instance.timer_handler_buffer.Pop();
 				handle();
 			}
 			else
 			{
 				for (int i = 0; i < CONFIG_EVENT_MAX_PRIORITY; i++)
 				{
-					if (event_buffer[i].Length() > 0)
+					if (manager_instance.event_buffer[i].Length() > 0)
 					{
-						UniquePtr<IEvent> event = event_buffer[i].Pop();
+						UniquePtr<IEvent> event = manager_instance.event_buffer[i].Pop();
 						if (event)
 						{
 							event->Handler();
+							if (event->Type() == EventType::TIMED)
+							{
+								ITimedEvent * e = static_cast<ITimedEvent *>( event.get());								
+								e->StartTimer();
+							}
 						}
 					}
 				}
@@ -158,20 +189,6 @@ namespace Shrine
 		return true;
 	}
 	
-	SharedPtr<EventManager> manager_instance;
-	SharedPtr<ISystem> System()
-	{
-		if (!manager_instance)
-		{
-			manager_instance = SharedPtr<EventManager>(new EventManager());
-		}
-		return manager_instance;
-	}
 	
-	
-	//SharedPtr<ITimer> begin(SharedPtr<ISystem> & s)
-	//{
-		//return s->CreateTimer();
-	//}
 }
 

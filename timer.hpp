@@ -58,32 +58,40 @@ namespace Shrine
 		EXPIRED
 	};
 	
-	class ITimer 
+	
+	struct TimerNode
 	{
-		public:
-		ITimer() = default;
-		virtual ~ITimer() = default;
-		
-		virtual const TimerType Type() const = 0;
-		virtual void Type(const TimerType type) = 0;
-		
-		virtual const TickType Period() const = 0;
-		virtual void Period(const TickType & tick) = 0;
-		
-		virtual void Callback(TimerCallback callback) = 0;		
-		virtual bool Start() = 0;
-		virtual bool Stop() = 0;
-		virtual bool Reset() = 0;
-		
-		
-		virtual const TimerStatus Status() const = 0;
-		virtual void Status(const TimerStatus status) = 0;
-				
+		uint16_t counter;
+		TimerCallback func_ptr;
+		TimerType type;
+		TickType timer_tick;
+		TimerStatus status;
+		TimerNode * pNext;
 	};
 	
+	class Timer
+	{
+		public:
+		Timer();
+		~Timer();
+		
+		const TimerType Type() const;
+		void Type(const TimerType type);		
+		void Callback(TimerCallback callback);
+		bool Start();
+		bool Stop();
+		bool Reset();
+		const TimerStatus Status() const;
+		void Status(const TimerStatus status);
+		const TickType Period() const;
+		void Period(const TickType & tick);
+		
+		
+		public:
+		TimerNode node;
+	};
 	
 	void InitializeTimer();
-	SharedPtr<ITimer> TimerInstantiate();
 }
 
 
