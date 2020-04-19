@@ -61,7 +61,7 @@ namespace Shrine
 	}
 	
 	
-	void TimedEventTimeoutCallback()
+	void TimedEventTimeoutCallback(TimerNode * node)
 	{
 		
 	}
@@ -70,8 +70,7 @@ namespace Shrine
 	{
 		event_type = EventType::TIMED;
 		event_timer.Period(TickType(1000));
-		event_timer.Type(TimerType::REPETATIVE);
-		event_timer.Callback(TimedEventTimeoutCallback);
+		event_timer.Type(TimerType::EVENT);
 	}
 	
 	ITimedEvent::~ITimedEvent()

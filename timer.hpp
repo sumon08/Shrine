@@ -47,7 +47,8 @@ namespace Shrine
 	enum class TimerType
 	{
 		ONE_SHOT,
-		REPETATIVE
+		REPETATIVE,
+		EVENT
 	};
 	
 	
@@ -73,7 +74,7 @@ namespace Shrine
 	{
 		public:
 		Timer();
-		~Timer();
+		virtual ~Timer();
 		
 		const TimerType Type() const;
 		void Type(const TimerType type);		
@@ -85,10 +86,13 @@ namespace Shrine
 		void Status(const TimerStatus status);
 		const TickType Period() const;
 		void Period(const TickType & tick);
+		const bool IsEventTimer() const;
 		
 		
-		public:
+		
+		protected:
 		TimerNode node;
+		bool event_flag;
 	};
 	
 	void InitializeTimer();

@@ -18,7 +18,6 @@ namespace Shrine
 	
 	
 	#define TIMER_COUNTER_MAX		0xFFFF
-	#define TIMER_COUNTER_MID		0x8000
 	
 	
 	
@@ -36,10 +35,9 @@ namespace Shrine
 		{
 			pActive = NULL;
 			counter = 0;
-		}
-		
-		
+		}		
 		~TimerManager() = default;
+		
 		
 		public:
 		uint16_t counter;		
@@ -179,7 +177,7 @@ namespace Shrine
 			if (node->counter == manager.counter)
 			{
 				node->func_ptr();
-				if (node->type == TimerType::REPETATIVE)
+				if (node->type != TimerType::ONE_SHOT)
 				{
 					uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
 					if (diff < node->timer_tick.Tick())
@@ -214,10 +212,6 @@ namespace Shrine
 	void TimerTickHandler()
 	{
 		manager.counter++;
-		if (manager.counter == 0xFFFF)
-		{
-			manager.counter = 0;
-		}
 		System system = System::Instance();
 		system.Trigger(handler);
 	}

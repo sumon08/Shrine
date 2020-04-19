@@ -71,6 +71,11 @@ void TestHandler()
 }
 
 
+void TestHandler2()
+{
+	PORTA ^= 1 << PA3;
+}
+
 
 
 
@@ -80,12 +85,21 @@ int main(void)
 	Shrine::System & system = Shrine::System::Instance();
 	DDRA |= 1 << PA0;
 	DDRA |= 1 << PA1;
+	DDRA |= 1 << PA3;
 	
 	Shrine::Timer timer;
 	timer.Callback(TestHandler);
 	timer.Type(Shrine::TimerType::REPETATIVE);
 	timer.Period(Shrine::TickType(10));
 	timer.Start();
+	
+	Shrine::Timer timer1;
+	timer1.Callback(TestHandler2);
+	timer1.Period(Shrine::TickType(100));
+	timer1.Type(Shrine::TimerType::REPETATIVE);
+	timer1.Start();
+	
+	
 	system.Run();
 	
 	
