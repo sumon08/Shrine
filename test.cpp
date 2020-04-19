@@ -9,26 +9,65 @@
 #include "event.hpp"
 #include "memory.hpp"
 
-class TestEvent : public Shrine::IEvent
+class Monitor 
 {
-	void Handler()
+	public:
+	Monitor()
 	{
-		PORTA ^= 1 << PA1;
+		current_state = false;
+		sample_count = 0;
+		DDRA &= ~(1 << PA2);
+	}
+	
+	
+	
+	void Sample()
+	{
+		if (current_state == false && PinState())
+		{
+			sample_count++;
+			if (sample_count >= 10)
+			{
+				current_state = true;
+				PORTA |= 1 << PA1;
+			}
+		}
+		else if (current_state == true && !PinState())
+		{
+			sample_count++;
+			if (sample_count >= 10)
+			{
+				current_state = false;
+				PORTA &= ~(1<<PA1);
+			}
+		}
+		else
+		{
+			sample_count = 0;
+		}
+	}
+	
+	bool PinState()
+	{
+		if (PINA & 1 << PA2)
+		{
+			return true;
+		}
+		return false;
 	}
 	
 	private:
-	int data;
+	bool current_state;
+	uint8_t sample_count;
 };
 
 
+Monitor monitor;
 
 void TestHandler()
 {
 	PORTA ^= 1 << PA0;
-	Shrine::System& system = Shrine::System::Instance();
-	Shrine::UniquePtr<Shrine::IEvent> event = Shrine::UniquePtr<Shrine::IEvent>(new TestEvent());
-	event->Priority(2);
-	system.Trigger(Shrine::move(event));
+	monitor.Sample();
 }
 
 
@@ -45,7 +84,7 @@ int main(void)
 	Shrine::Timer timer;
 	timer.Callback(TestHandler);
 	timer.Type(Shrine::TimerType::REPETATIVE);
-	timer.Period(Shrine::TickType(200));
+	timer.Period(Shrine::TickType(10));
 	timer.Start();
 	system.Run();
 	
