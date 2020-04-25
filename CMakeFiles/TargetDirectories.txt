@@ -1,0 +1,3 @@
+/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/rebuild_cache.dir
+/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir
+/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/edit_cache.dir

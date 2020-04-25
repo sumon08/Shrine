@@ -27,6 +27,8 @@ namespace Hardware
 		public:
 		TickTimerHandler timer_handler;
 		static TickTimer object;
+
+		void timer0_event_handler();
 	};
 }
 

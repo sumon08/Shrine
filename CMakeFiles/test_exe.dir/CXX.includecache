@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sumit/resource_clones/sumon_vai/event/avr_timer.cpp
+avr_timer.hpp
+/home/sumit/resource_clones/sumon_vai/event/avr_timer.hpp
+
+/home/sumit/resource_clones/sumon_vai/event/avr_timer.hpp
+

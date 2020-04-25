@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -std=c++11 -pthread  -rdynamic CMakeFiles/test_exe.dir/avr_timer.cpp.o CMakeFiles/test_exe.dir/event.cpp.o CMakeFiles/test_exe.dir/new.cpp.o CMakeFiles/test_exe.dir/test.cpp.o CMakeFiles/test_exe.dir/timer.cpp.o  -o test_exe  -Wl,-Bstatic -lgtest -lgtest_main -Wl,-Bdynamic 
