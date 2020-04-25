@@ -50,13 +50,14 @@ namespace Hardware
 		return &object;
 	}
 
-	void TickTimer::timer0_event_handler()
+	void TickTimer::timer0_interupt_handler()
 	{
 		Hardware::TickTimer * t = Hardware::TickTimer::Instance();
 		t->timer_handler();
 	}
 	
 }
+
 
 
 

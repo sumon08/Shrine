@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include "gmock/gmock.h"  // Brings in Google Mock.
 
 #include "event.hpp"
@@ -69,23 +70,24 @@ TEST(DebugConsoleTest, buffer_elements_and_pushed_data_should_be_same)
 	Shrine::System & system = Shrine::System::Instance();
 
 
+	Hardware::TickTimer * tm_tick = Hardware::TickTimer::Instance();
 	
 	Shrine::Timer timer;
 	timer.Callback(TestHandler);
 	timer.Type(Shrine::TimerType::REPETATIVE);
 	timer.Period(Shrine::TickType(10));
 	timer.Start();
-	system.Run();
 
+	int counter = 0;
 
+	while(counter <20)
+	{
+		tm_tick->timer0_interupt_handler();
+		system.Run();
+		counter++;
+	}	
 
-	while(1)
-	{	
-		
-	}
-
-
-
+	EXPECT_EQ(true, monitor.getCurrentState());
 }
 
 

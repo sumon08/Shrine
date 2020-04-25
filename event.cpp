@@ -154,8 +154,8 @@ namespace Shrine
 	bool System::Run()
 	{
 		
-		while(1)
-		{
+		// while(1)
+		// {
 			if (manager_instance.interrupt_bufer.Length() > 0)
 			{
 				InterruptHandler handle = manager_instance.interrupt_bufer.Pop();
@@ -185,7 +185,7 @@ namespace Shrine
 					}
 				}
 			}
-		}
+		// }
 		return true;
 	}
 	

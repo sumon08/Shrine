@@ -28,9 +28,11 @@ namespace Hardware
 		TickTimerHandler timer_handler;
 		static TickTimer object;
 
-		void timer0_event_handler();
+		void timer0_interupt_handler();
 	};
 }
+
+
 
 
 #endif /* AVR_TIMER_H_ */

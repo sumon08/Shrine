@@ -7,7 +7,7 @@
 
 
 #include "timer.hpp"
-// #include "avr_timer.hpp"
+#include "avr_timer.hpp"
 
 
 #include "event.hpp"

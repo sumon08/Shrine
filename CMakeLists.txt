@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -pthread")
 
 #Bring the headers
 include_directories(.)
-file(GLOB SOURCES_THIS "*.cpp")
+file(GLOB SOURCES_THIS "*.cpp" "test/*.cpp")
 add_executable(test_exe ${SOURCES_THIS})
 
 target_link_libraries(test_exe ${PROJECT_LINK_LIBS} )

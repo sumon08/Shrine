@@ -251,6 +251,33 @@ test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_exe.dir/build.make CMakeFiles/test_exe.dir/test.cpp.s
 .PHONY : test.cpp.s
 
+test/test_framework.o: test/test_framework.cpp.o
+
+.PHONY : test/test_framework.o
+
+# target to build an object file
+test/test_framework.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_exe.dir/build.make CMakeFiles/test_exe.dir/test/test_framework.cpp.o
+.PHONY : test/test_framework.cpp.o
+
+test/test_framework.i: test/test_framework.cpp.i
+
+.PHONY : test/test_framework.i
+
+# target to preprocess a source file
+test/test_framework.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_exe.dir/build.make CMakeFiles/test_exe.dir/test/test_framework.cpp.i
+.PHONY : test/test_framework.cpp.i
+
+test/test_framework.s: test/test_framework.cpp.s
+
+.PHONY : test/test_framework.s
+
+# target to generate assembly for a file
+test/test_framework.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_exe.dir/build.make CMakeFiles/test_exe.dir/test/test_framework.cpp.s
+.PHONY : test/test_framework.cpp.s
+
 timer.o: timer.cpp.o
 
 .PHONY : timer.o
@@ -299,6 +326,9 @@ help:
 	@echo "... test.o"
 	@echo "... test.i"
 	@echo "... test.s"
+	@echo "... test/test_framework.o"
+	@echo "... test/test_framework.i"
+	@echo "... test/test_framework.s"
 	@echo "... timer.o"
 	@echo "... timer.i"
 	@echo "... timer.s"

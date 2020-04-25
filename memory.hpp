@@ -64,13 +64,12 @@ namespace Shrine
 	struct ConstantByteSwap{
 		enum {value=0};
 	};
-	template <uint32_t target>
-	struct ConstantByteSwap<target,32>{
-		enum {value = ( (target >> 24) & 0xff) | ( (target >> 8) & 0xff00 ) | ( (target << 8) & 0xff0000 ) | ( (target<<24) &0xff0000u )};
-	};
+	// template <uint32_t target>
+	// struct ConstantByteSwap<target,32>{
+	// 	enum {value = ( (target >> 24) & 0xff) | ( (target >> 8) & 0xff00 ) | ( (target << 8) & 0xff0000 ) | ( (target<<24) &0xff0000u )};
+	// };
 
-
-	uint32_t ByteSwap(uint32_t target);
+	// uint32_t ByteSwap(uint32_t target);
 
 
 	template <typename T>

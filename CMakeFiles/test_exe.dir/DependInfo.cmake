@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/sumit/resource_clones/sumon_vai/event/event.cpp" "/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir/event.cpp.o"
   "/home/sumit/resource_clones/sumon_vai/event/new.cpp" "/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir/new.cpp.o"
   "/home/sumit/resource_clones/sumon_vai/event/test.cpp" "/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir/test.cpp.o"
+  "/home/sumit/resource_clones/sumon_vai/event/test/test_framework.cpp" "/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir/test/test_framework.cpp.o"
   "/home/sumit/resource_clones/sumon_vai/event/timer.cpp" "/home/sumit/resource_clones/sumon_vai/event/CMakeFiles/test_exe.dir/timer.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")

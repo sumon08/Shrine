@@ -16,6 +16,16 @@ CMakeFiles/test_exe.dir/new.cpp.o: new.cpp
 
 CMakeFiles/test_exe.dir/test.cpp.o: test.cpp
 
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: test/test_framework.cpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: avr_timer.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: config.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: event.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: fifo.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: memory.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: ticktype.hpp
+CMakeFiles/test_exe.dir/test/test_framework.cpp.o: timer.hpp
+
+CMakeFiles/test_exe.dir/timer.cpp.o: avr_timer.hpp
 CMakeFiles/test_exe.dir/timer.cpp.o: config.hpp
 CMakeFiles/test_exe.dir/timer.cpp.o: event.hpp
 CMakeFiles/test_exe.dir/timer.cpp.o: fifo.hpp
