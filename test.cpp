@@ -101,11 +101,4 @@ int main(void)
 	
 	
 	system.Run();
-	
-	
-	while(1)
-	{
-		
-		
-	}
 }

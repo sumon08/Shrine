@@ -81,10 +81,8 @@ namespace Shrine
 		
 		const TickType Period();
 		void Period(const TickType & period);		
-		void StartTimer();
-		
-		private:
-		Timer event_timer;
+		private:		
+		TimerNode timer_node;
 	};
 	
 	struct InterruptHandler

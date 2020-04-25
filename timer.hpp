@@ -38,37 +38,12 @@ SOFTWARE.
 
 #include "ticktype.hpp"
 #include "memory.hpp"
+#include "timernode.hpp"
 
 
 namespace Shrine 
 {
-	typedef void (*TimerCallback)();
 	
-	enum class TimerType
-	{
-		ONE_SHOT,
-		REPETATIVE,
-		EVENT
-	};
-	
-	
-	enum class TimerStatus
-	{
-		RUNNING,
-		STOPPED,
-		EXPIRED
-	};
-	
-	
-	struct TimerNode
-	{
-		uint16_t counter;
-		TimerCallback func_ptr;
-		TimerType type;
-		TickType timer_tick;
-		TimerStatus status;
-		TimerNode * pNext;
-	};
 	
 	class Timer
 	{
@@ -86,13 +61,11 @@ namespace Shrine
 		void Status(const TimerStatus status);
 		const TickType Period() const;
 		void Period(const TickType & tick);
-		const bool IsEventTimer() const;
 		
 		
 		
 		protected:
 		TimerNode node;
-		bool event_flag;
 	};
 	
 	void InitializeTimer();

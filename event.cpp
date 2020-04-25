@@ -61,16 +61,16 @@ namespace Shrine
 	}
 	
 	
-	void TimedEventTimeoutCallback(TimerNode * node)
-	{
-		
-	}
 	
 	ITimedEvent::ITimedEvent() 
 	{
 		event_type = EventType::TIMED;
-		event_timer.Period(TickType(1000));
-		event_timer.Type(TimerType::EVENT);
+		timer_node.timer_tick = TickType(1000);
+		timer_node.status = TimerStatus::STOPPED;
+		timer_node.type = TimerType::EVENT;
+		timer_node.pNext = NULL;
+		//timer_node.func_ptr = this->Handler;
+		
 	}
 	
 	ITimedEvent::~ITimedEvent()
@@ -80,18 +80,15 @@ namespace Shrine
 	
 	const TickType ITimedEvent::Period()  
 	{
-		return event_timer.Period();
+		return timer_node.timer_tick;
 	}
 	
 	void ITimedEvent::Period(const TickType & period)
 	{
-		event_timer.Period(period); 
+		timer_node.timer_tick = period;
 	}
 	
-	void ITimedEvent::StartTimer()
-	{
-		event_timer.Start();
-	}
+	
 	
 	
 	EventManager::EventManager()
@@ -175,11 +172,11 @@ namespace Shrine
 						if (event)
 						{
 							event->Handler();
-							if (event->Type() == EventType::TIMED)
-							{
-								ITimedEvent * e = static_cast<ITimedEvent *>( event.get());								
-								e->StartTimer();
-							}
+							//if (event->Type() == EventType::TIMED)
+							//{
+								//ITimedEvent * e = static_cast<ITimedEvent *>( event.get());
+								//
+							//}
 						}
 					}
 				}

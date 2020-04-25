@@ -27,6 +27,17 @@ namespace Shrine
 		
 	}
 	
+	//
+	//struct TimerNode
+	//{
+		//uint16_t counter;
+		//TimerCallback func_ptr;
+		//TimerType type;
+		//TickType timer_tick;
+		//TimerStatus status;
+		//TimerNode * pNext;
+	//};
+	
 	
 	class TimerManager 
 	{
@@ -59,8 +70,64 @@ namespace Shrine
 		node.pNext = NULL;
 		node.func_ptr = DefaultTimerHandler;
 		node.status = TimerStatus::STOPPED;
+		node.type = TimerType::ONE_SHOT;
 	}
 	
+	
+	bool TimerNode::Start()
+	{
+		if(status != TimerStatus::STOPPED)
+		return false;
+		
+		pNext = manager.pActive;
+		manager.pActive = this;
+		
+		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
+		
+		if(diff > timer_tick.Tick())
+		{
+			counter = manager.counter + timer_tick.Tick();
+		}
+		else
+		{
+			counter = timer_tick.Tick() - diff;
+		}
+		
+		status = TimerStatus::RUNNING;
+		return true;
+	}
+	
+	bool TimerNode::Stop()
+	{
+		TimerNode * pnode = manager.pActive;
+		TimerNode * prev = NULL;
+		while(1)
+		{
+			if(pnode == this)
+			{
+				if (prev == NULL)
+				{
+					manager.pActive = pnode->pNext;
+				}
+				else
+				{
+					prev->pNext = pnode->pNext;
+				}
+				status = TimerStatus::STOPPED;
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	bool TimerNode::Reset()
+	{
+		if (Stop())
+		{
+			return Start();
+		}
+		return false;
+	}
 	
 	
 	
@@ -112,56 +179,16 @@ namespace Shrine
 	}
 	bool Timer::Start()
 	{
-		if(node.status != TimerStatus::STOPPED)
-			return false;
-		
-		node.pNext = manager.pActive;
-		manager.pActive = &node;
-		
-		uint16_t diff = TIMER_COUNTER_MAX - manager.counter;
-		
-		if(diff > node.timer_tick.Tick())
-		{
-			node.counter = manager.counter + node.timer_tick.Tick();
-		}
-		else
-		{
-			node.counter = node.timer_tick.Tick() - diff;
-		}
-		
-		node.status = TimerStatus::RUNNING;
-		return true;
+		return node.Start();
 	}
 	bool Timer::Stop()
 	{
-		TimerNode * pnode = manager.pActive;
-		TimerNode * prev = NULL;
-		while(1)
-		{
-			if(pnode == &node)
-			{
-				if (prev == NULL)
-				{
-					manager.pActive = pnode->pNext;
-				}
-				else
-				{
-					prev->pNext = pnode->pNext;
-				}
-				node.status = TimerStatus::STOPPED;
-				return true;
-			}
-		}
-		return false;
+		return node.Stop();
 		
 	}
 	bool Timer::Reset()
 	{
-		if (Stop())
-		{
-			Start();
-		}
-		return false;
+		return node.Reset();
 	}
 	
 	
