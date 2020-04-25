@@ -77,15 +77,14 @@ TEST(DebugConsoleTest, buffer_elements_and_pushed_data_should_be_same)
 	timer.Start();
 	system.Run();
 
-    // Hardware::TickTimer * tm = NULL;
-    // tm  = Hardware::TickTimer::Instance();
+
 
 	while(1)
 	{	
-		// tm->timer0_event_handler();
+		
 	}
 
-    // EXPECT_EQ(true/*expected*/, monitor.getCurrentState());
+
 
 }
 
