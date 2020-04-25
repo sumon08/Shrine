@@ -64,7 +64,7 @@ void TestHandler()
 	monitor.Sample();
 }
 
-TEST(DebugConsoleTest, buffer_elements_and_pushed_data_should_be_same)
+TEST(FrameworkTest, timer_callback_should_be_after_the_period_specified)
 {
 	Shrine::InitializeTimer();
 	Shrine::System & system = Shrine::System::Instance();
