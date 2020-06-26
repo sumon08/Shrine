@@ -21,10 +21,8 @@
 
 
 #define CONFIG_TIMER_TICK_PERIOD_MS					5
-
-
 #define CONFIG_FIFO_SIZE							30
 
-
+#define CONFIG_MAX_NUMBER_OF_EVENT					50
 
 #endif /* CONFIG_H_ */

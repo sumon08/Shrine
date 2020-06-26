@@ -60,14 +60,7 @@ namespace Shrine
 	template <typename U> struct RemoveReference<U&>	{ typedef U Result; };
 	template <typename U> struct RemoveReference<U&&>	{ typedef U Result; };
 
-	//template <int target, int bitsize>
-	//struct ConstantByteSwap{
-		//enum {value=0};
-	//};
-	//template <uint32_t target>
-	//struct ConstantByteSwap<target,32>{
-		//enum {value = ( (target >> 24) & 0xff) | ( (target >> 8) & 0xff00 ) | ( (target << 8) & 0xff0000 ) | ( (target<<24) &0xff0000u )};
-	//};
+	
 
 
 	uint32_t ByteSwap(uint32_t target);
@@ -113,11 +106,14 @@ namespace Shrine
 	
 	
 	
-	
+	template<typename T>
 	struct RefCounter
 	{
 		RefCounter(){	count = 0;}
+			
+			
 		uint16_t count;
+		T * pointer;
 	};
 	
 	template <typename T> 
@@ -131,16 +127,15 @@ namespace Shrine
 		SharedPtr() noexcept
 		{
 			obj_ptr = NULL;
-			pointer = NULL;
 		}
 		
 		SharedPtr(T * ptr)
 		{
 			if(ptr != NULL)
 			{
-				obj_ptr = new RefCounter();
+				obj_ptr = new RefCounter<T>();
 				obj_ptr->count = 1;
-				pointer = ptr;
+				obj_ptr->pointer = ptr;
 			}
 			else
 			{
@@ -154,13 +149,12 @@ namespace Shrine
 			if(ptr.obj_ptr != NULL)
 			{
 				obj_ptr= ptr.obj_ptr;
-				pointer = ptr.pointer;
+				obj_ptr->pointer = ptr.obj_ptr->pointer;
 				obj_ptr->count++;
 			}
 			else
 			{
 				obj_ptr = NULL;
-				pointer = NULL;
 			}
 		}
 		
@@ -170,13 +164,12 @@ namespace Shrine
 			if (r.obj_ptr != NULL)
 			{
 				obj_ptr = r.obj_ptr;
-				pointer = r.pointer;
 				obj_ptr->count++;
 			}
 			else
 			{
 				obj_ptr = NULL;
-				pointer = NULL;
+				obj_ptr->pointer = NULL;
 			}
 		}
 		
@@ -185,9 +178,7 @@ namespace Shrine
 			if(ptr.obj_ptr != NULL)
 			{
 				obj_ptr= ptr.obj_ptr;
-				pointer = ptr.pointer;
 				ptr.obj_ptr = NULL;
-				ptr.pointer = NULL;
 			}
 		}
 		
@@ -197,14 +188,12 @@ namespace Shrine
 			if(ptr.obj_ptr != NULL)
 			{
 				obj_ptr= ptr.obj_ptr;
-				pointer = ptr.pointer;
 				ptr.obj_ptr = NULL;
-				ptr.pointer = NULL;
 			}
 			else
 			{
 				obj_ptr = NULL;
-				pointer = NULL;
+				obj_ptr->pointer = NULL;
 			}
 		}
 		
@@ -212,9 +201,9 @@ namespace Shrine
 		{
 			if(ptr)
 			{
-				obj_ptr = new RefCounter();
+				obj_ptr = new RefCounter<T>();
 				obj_ptr->count = 1;
-				pointer = ptr->release();
+				obj_ptr->pointer = ptr->release();
 			}
 			else
 			{
@@ -233,7 +222,7 @@ namespace Shrine
 			{
 				Delete();
 				obj_ptr = ptr.obj_ptr;
-				pointer = ptr.pointer;
+				obj_ptr->pointer = ptr.pointer;
 				obj_ptr->count++;
 			}
 			
@@ -246,9 +235,9 @@ namespace Shrine
 			{
 				Delete();
 				obj_ptr = ptr.obj_ptr;
-				pointer = ptr.pointer;
+				obj_ptr->pointer = ptr.obj_ptr->pointer;
 				ptr.obj_ptr = NULL;
-				ptr.pointer = NULL;
+				ptr.obj_ptr->pointer = NULL;
 			}
 			return *this;
 		}
@@ -274,43 +263,42 @@ namespace Shrine
 				obj_ptr->count --;
 				if(obj_ptr->count == 0)
 				{
-					delete pointer;
-					pointer = ptr;
+					delete obj_ptr->pointer;
+					obj_ptr->pointer = ptr;
 					obj_ptr->count = 1;
 					return;
 				}	
 			}
 			
-			obj_ptr = new RefCounter();
-			pointer = ptr;
+			obj_ptr = new RefCounter<T>();
+			obj_ptr->pointer = ptr;
 			obj_ptr->count = 1;
 		}
 		
 		void Swap(SharedPtr<T> & ptr)
 		{
-			RefCounter * ref = obj_ptr;
-			T * _p = pointer;
+			RefCounter<T> * ref = obj_ptr;
+			T * _p = obj_ptr->pointer;
 			
 			obj_ptr = ptr.obj_ptr;
-			pointer = ptr.pointer;
 			
 			ptr.obj_ptr = ref;
-			ptr.pointer = _p;
+			ptr.obj_ptr->pointer = _p;
 		}
 		
 		T * Get() const noexcept
 		{
-			return pointer;
+			return obj_ptr->pointer;
 		}
 		
 		T & operator*()
 		{
-			return *pointer;
+			return *obj_ptr->pointer;
 		}
 		
 		T * operator->()
 		{
-			return pointer;
+			return obj_ptr->pointer;
 		}
 		
 		uint16_t UseCount() const noexcept
@@ -332,15 +320,13 @@ namespace Shrine
 			obj_ptr->count--;
 			if(obj_ptr->count == 0)
 			{
-				delete pointer;			
+				delete obj_ptr->pointer;			
 				delete obj_ptr;
 				obj_ptr = NULL;
-				pointer = NULL;
 			}		
 		}		
 		private:
-		RefCounter * obj_ptr;
-		T * pointer;
+		RefCounter<T> * obj_ptr;
 	};
 	
 	

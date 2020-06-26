@@ -38,7 +38,8 @@ SOFTWARE.
 #include "fifo.hpp"
 #include <stdint.h>
 #include "timer.hpp"
-
+#include "list.hpp"
+#include "dispatch.hpp"
 
 namespace Shrine 
 {
@@ -53,22 +54,28 @@ namespace Shrine
 		STEPPED,
 	};
 	
+	typedef uint16_t EventIndex;
+	
 	
 	class IEvent
 	{
+		friend class System;
+		protected:
+		IEvent(EventIndex idx);
+		
+		
 		public:
-		IEvent();
 		virtual ~IEvent();
 		const uint8_t Priority() const;
 		void Priority(const uint8_t priority);
-		const EventType Type() const;		
-		virtual void Handler() = 0;
+		DispatcherId Dispatcher(UniquePtr<IDispatcher> dispatcher);
+		void Remove(DispatcherId);
+		
+		
 		
 		private:
 		uint8_t priority;
-		
-		protected:
-		EventType event_type;
+		EventIndex event_index;
 		
 	};
 	
@@ -76,7 +83,7 @@ namespace Shrine
 	class ITimedEvent : public IEvent
 	{
 		public:
-		ITimedEvent();
+		ITimedEvent(EventIndex idx);
 		virtual ~ITimedEvent();
 		
 		const TickType Period();
@@ -126,8 +133,13 @@ namespace Shrine
 		bool Run();
 		bool Trigger(UniquePtr<IEvent> event); 
 		bool Trigger(InterruptHandler handler); 
-		bool Trigger(TimerHandler handler); 		
+		bool Trigger(TimerHandler handler); 	
+		
+		template<typename T>
+		bool Register();
 	};
+
+
 }
 
 #endif /* EVENT_H_ */

@@ -19,6 +19,19 @@ namespace Shrine
 	}
 	
 	
+	
+	template <typename T>
+	struct EventIndexer
+	{
+		static EventIndex event_index;
+	};
+	
+	template<typename T>
+	EventIndex EventIndexer<T>::event_index = 0xFFFF;
+	
+
+
+	
 	class EventManager
 	{
 		
@@ -30,14 +43,16 @@ namespace Shrine
 		Fifo<UniquePtr<IEvent>> event_buffer[CONFIG_EVENT_MAX_PRIORITY];
 		Fifo<TimerHandler> timer_handler_buffer;
 		Fifo<InterruptHandler> interrupt_bufer;
+		
+		List<UniquePtr<IDispatcher>> dispatcher_list[CONFIG_MAX_NUMBER_OF_EVENT];
 	};
 	
 	EventManager manager_instance;
 	
-	IEvent::IEvent()
+	IEvent::IEvent(EventIndex idx)
 	{	
 		priority = CONFIG_EVENT_DEFAULT_PRIORITY;
-		event_type = EventType::SIMPLE;
+		event_index = idx;
 	}
 	
 	const uint8_t IEvent::Priority() const
@@ -50,11 +65,26 @@ namespace Shrine
 		this->priority = priority;
 	}
 	
-	const EventType IEvent::Type() const
+
+	DispatcherId IEvent::Dispatcher(UniquePtr<IDispatcher> dispatcher)
 	{
-		return event_type;
+		DispatcherId ret = reinterpret_cast<DispatcherId>(dispatcher.get());
+		manager_instance.dispatcher_list[event_index].PushBack(move(dispatcher)); 
+		return ret;
 	}
-	
+
+	void IEvent::Remove(DispatcherId id)
+	{
+		auto pred = [id](const UniquePtr<IDispatcher> & obj)->bool 
+		{
+			if(reinterpret_cast<DispatcherId>(obj.get()) == id)
+				return true;
+				
+			return false;
+		};
+		manager_instance.dispatcher_list[event_index].RemoveIf(pred);
+	}
+
 	IEvent::~IEvent()
 	{
 		
@@ -62,14 +92,12 @@ namespace Shrine
 	
 	
 	
-	ITimedEvent::ITimedEvent() 
+	ITimedEvent::ITimedEvent(EventIndex idx) : IEvent(idx) 
 	{
-		event_type = EventType::TIMED;
 		timer_node.timer_tick = TickType(1000);
 		timer_node.status = TimerStatus::STOPPED;
 		timer_node.type = TimerType::EVENT;
 		timer_node.pNext = NULL;
-		//timer_node.func_ptr = this->Handler;
 		
 	}
 	
@@ -141,6 +169,13 @@ namespace Shrine
 		return manager_instance.timer_handler_buffer.Push(handler);
 	}
 	
+	template<typename T>
+	bool Shrine::System::Register()
+	{
+		return true;
+	}
+
+	
 	System shrine;
 	System & System::Instance()
 	{
@@ -171,12 +206,12 @@ namespace Shrine
 						UniquePtr<IEvent> event = manager_instance.event_buffer[i].Pop();
 						if (event)
 						{
-							event->Handler();
-							//if (event->Type() == EventType::TIMED)
-							//{
-								//ITimedEvent * e = static_cast<ITimedEvent *>( event.get());
-								//
-							//}
+							for (size_t i =0; i < manager_instance.dispatcher_list[event->event_index].Size(); i++)
+							{
+								auto & item = manager_instance.dispatcher_list[event->event_index][i];
+								if(item)
+									item->Dispatch(event.get());
+							}
 						}
 					}
 				}

@@ -38,9 +38,10 @@ namespace Hardware
 			timer_handler = handler;
 		
 		//Timer0 is used to create 5ms 		
-		OCR0 = 0x35;
-		TCCR0 = (1 << WGM01) | (1 << CS02) | (1 << CS00);
-		TIMSK |= 1 << OCIE0;	
+		OCR0A = 0x35;
+		TCCR0A = 1 << WGM01;
+		TCCR0B =  (1 << CS02) | (1 << CS00);
+		TIMSK0 |= 1 << OCIE0A;	
 		sei();
 		return true;	
 	}
@@ -54,7 +55,7 @@ namespace Hardware
 
 
 
-ISR(TIMER0_COMP_vect)
+ISR(TIMER0_COMPA_vect)
 {
 	Hardware::TickTimer * t = Hardware::TickTimer::Instance();
 	t->timer_handler();

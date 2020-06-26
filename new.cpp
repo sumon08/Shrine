@@ -31,12 +31,12 @@ void operator delete[](void * ptr)
 }
 
 
-void * operator new(size_t size, void * address)
+void * operator new(size_t, void * address)
 {
 	return address;
 }
 
-void * operator new[](size_t size, void * address)
+void * operator new[](size_t size, void * address) throw()
 {
 	return address;
 }
